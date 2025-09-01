@@ -36,7 +36,7 @@ export default async function handler(req, res) {
     // STEP 4: Send mail
     await transporter.sendMail({
       from: `"AI Job Agent" <${process.env.GMAIL_USER}>`,
-      to: process.env.TARGET_EMAIL,  // your recipient email
+      to: process.env.EMAIL_TO,  // your recipient email
       subject: "Latest Job Report - Bangalore",
       html: `<h3>AI Job Report</h3><p>${summary}</p>`
     });
