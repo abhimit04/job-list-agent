@@ -10,57 +10,58 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Missing SerpAPI key" });
     }
 
-    // ✅ Wrap fetch URL in backticks
-    const response = await fetch(
-      `https://serpapi.com/search.json?engine=google_jobs&q=Scrum+Master+OR+Project+Manager+OR+Program+Manager+OR+Technical+Project+Manager&location=Bangalore,+Karnataka,+India&api_key=${serpApiKey}`
-    );
+    let jobs = [];
+    let start = 0;
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch jobs from SerpAPI");
-    }
+    // keep fetching until we have 20 LinkedIn + Glassdoor jobs OR max 5 pages (~50 jobs)
+    while (jobs.length < 20 && start < 50) {
+      const response = await fetch(
+        `https://serpapi.com/search.json?engine=google_jobs&q=Scrum+Master+OR+Project+Manager+OR+Program+Manager+OR+Technical+Project+Manager&location=Bangalore,+Karnataka,+India&start=${start}&api_key=${serpApiKey}`
+      );
 
-    const data = await response.json();
+      if (!response.ok) throw new Error("Failed to fetch jobs from SerpAPI");
 
-    if (!data.jobs_results) {
-      return res.status(500).json({ error: "No job results found" });
-    }
+      const data = await response.json();
 
-    // ✅ Filter only LinkedIn + Glassdoor, posted within 30 days
-    const jobs = data.jobs_results
-      .filter(
-        (job) =>
+      if (!data.jobs_results || data.jobs_results.length === 0) break;
+
+      const filtered = data.jobs_results
+        .filter(job =>
           job.via &&
           (job.via.toLowerCase().includes("linkedin") ||
-            job.via.toLowerCase().includes("glassdoor"))
-      )
-      .filter((job) => {
-        const posted = job.detected_extensions?.posted_at || "";
-        return (
-          posted.includes("day") &&
-          !posted.includes("30+")
-        );
-      })
-      .map((job) => ({
-        title: job.title,
-        company: job.company_name,
-        location: job.location,
-        date: job.detected_extensions?.posted_at || "N/A",
-        source: job.via,
-        link: job.apply_options?.[0]?.link || `https://www.google.com/search?q=${job.job_id}`,
-      }));
+           job.via.toLowerCase().includes("glassdoor"))
+        )
+        .filter(job => job.detected_extensions?.posted_at) // has posting info
+        .map(job => ({
+          title: job.title,
+          company: job.company_name,
+          location: job.location,
+          date: job.detected_extensions?.posted_at || "N/A",
+          source: job.via,
+          link: job.apply_options?.[0]?.link || job.job_id,
+        }));
 
+      jobs = jobs.concat(filtered);
+
+      start += 10; // move to next page
+    }
+
+    // trim to exactly 20
+    jobs = jobs.slice(0, 20);
+
+    // 🔹 Gemini AI Summary
     let aiAnalysis = "AI analysis not available.";
     if (geminiApiKey && jobs.length > 0) {
       const genAI = new GoogleGenerativeAI(geminiApiKey);
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-      const prompt = `Summarize the following ${jobs.length} jobs in Bangalore from LinkedIn and Glassdoor (Scrum Master, Project Manager, Program Manager). Only jobs not older than 30 days should be considered. Provide company, role, and hyperlink per line:\n\n${JSON.stringify(jobs, null, 2)}`;
+      const prompt = `Analyze the following ${jobs.length} jobs in Bangalore only from LinkedIn and Glassdoor for Scrum Master, Project Manager, Program Manager roles. Summarize skills, salary patterns, demand trends, and provide job titles with company names:\n\n${JSON.stringify(jobs, null, 2)}`;
 
       const aiResponse = await model.generateContent(prompt);
-      aiAnalysis = aiResponse.response.text(); // ✅ Correct extraction
+      aiAnalysis = aiResponse.response;
     }
 
-    // ✅ Gmail transport (requires Gmail App Password)
+    // 🔹 Gmail send
     let transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -78,11 +79,12 @@ export default async function handler(req, res) {
 
     res.status(200).json({
       success: true,
-      message: "Jobs fetched & emailed successfully!",
+      message: "20 jobs fetched & emailed successfully!",
+      count: jobs.length,
       jobs,
       summary: aiAnalysis,
-      timestamp: new Date().toISOString(),
     });
+
   } catch (err) {
     console.error("❌ Job Agent Error:", err);
     res.status(500).json({ success: false, error: err.message });
