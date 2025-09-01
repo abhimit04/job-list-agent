@@ -60,7 +60,7 @@ export default async function handler(req, res) {
 //    and new job in new line with hyperlink:\n\n${JSON.stringify(jobs)}`;
 
     const aiResponse = await model.generateContent(prompt);
-    const summary = aiResponse.response.text();
+    aiAnalysis = aiResponse.response;
     }
     // STEP 3: Setup Gmail transport
     let transporter = nodemailer.createTransport({
@@ -76,7 +76,7 @@ export default async function handler(req, res) {
       from: `"AI Job Agent" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_TO,  // your recipient email
       subject: "Latest Job Report - Bangalore",
-      html: `<h3>AI Job Report</h3><p>${summary}</p>`
+      html: `<h3>AI Job Report</h3><p>${aiAnalysis}</p>`
     });
 
     // STEP 5: Respond to frontend
@@ -84,7 +84,7 @@ export default async function handler(req, res) {
       success: true,
       message: "Jobs fetched & emailed successfully!",
       jobs,
-      summary
+      summary : aiAnalysis
     });
 
   } catch (err) {
