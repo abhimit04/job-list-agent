@@ -37,15 +37,7 @@ export default async function handler(req, res) {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const prompt =
     `Summarize these ${jobs.length} jobs in Bangalore into a concise report with company, role,
-    and new job in new line with hyperlink:\n\n${JSON.stringify(jobs)}
-     Provide concise insights:
-     1. Market trends (2 sentences)
-     2. Salary insights
-     3. Top 5 in-demand skills
-     4. Best opportunities by experience level
-     5. Quick tips for applicants
-
-     Keep under 250 words';
+    and new job in new line with hyperlink:\n\n${JSON.stringify(jobs)}`;
 
     const aiResponse = await model.generateContent(prompt);
     const summary = aiResponse.response.text();
