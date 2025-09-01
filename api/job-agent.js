@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   try {
     // STEP 1: Mock jobs / API jobs (replace with SerpAPI later)
     const serpApiKey = process.env.SERPAPI_KEY;
-        //const geminiApiKey = process.env.GEMINI_API_KEY;
+    const geminiApiKey = process.env.GOOGLE_AI_API_KEY;
 
         if (!serpApiKey) {
           return res.status(500).json({ error: "Missing SerpAPI key" });
@@ -22,22 +22,38 @@ export default async function handler(req, res) {
           return res.status(500).json({ error: "No job results found" });
         }
 
-        const jobs = data.jobs_results
-          .filter(job => job.detected_extensions?.posted_at) // ensure job has a posted date
-          .map(job => ({
-            title: job.title,
-            company: job.company_name,
-            location: job.location,
-            date: job.detected_extensions?.posted_at || "N/A",
-            link: job.apply_options?.[0]?.link || job.job_id,
-          }));
+         // 🔎 Filter only LinkedIn + Glassdoor
+         const jobs = data.jobs_results
+              .filter(job =>
+                job.via &&
+                (job.via.toLowerCase().includes("linkedin") ||
+                 job.via.toLowerCase().includes("glassdoor"))
+              )
+              .filter(job => job.detected_extensions?.posted_at) // ensure recent posting info
+              .map(job => ({
+                title: job.title,
+                company: job.company_name,
+                location: job.location,
+                date: job.detected_extensions?.posted_at || "N/A",
+                source: job.via,
+                link: job.apply_options?.[0]?.link || job.job_id,
+              }));
+     let aiAnalysis = "AI analysis not available.";
+        if (geminiApiKey && jobs.length > 0) {
+          const genAI = new GoogleGenerativeAI(geminiApiKey);
+          const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
+          const prompt = `Analyze the following ${jobs.length} jobs in Bangalore only from LinkedIn and Glassdoor for Scrum Master, Project Manager, Program Manager roles. Summarize key skills, salary patterns, and demand trends:\n\n${JSON.stringify(
+            jobs, Do not consider jobs which are 30 day old or more,
+            null,
+            2
+          )}`;
     // STEP 2: AI summary using Gemini (Free tier)
-    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const prompt =
-    `Summarize these ${jobs.length} jobs in Bangalore into a concise report with company, role,
-    and new job in new line with hyperlink:\n\n${JSON.stringify(jobs)}`;
+//    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+//    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+//    const prompt =
+//    `Summarize these ${jobs.length} jobs in Bangalore into a concise report with company, role,
+//    and new job in new line with hyperlink:\n\n${JSON.stringify(jobs)}`;
 
     const aiResponse = await model.generateContent(prompt);
     const summary = aiResponse.response.text();
