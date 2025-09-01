@@ -15,6 +15,9 @@ export default async function handler(req, res) {
         const response = await fetch(
           `https://serpapi.com/search.json?engine=google_jobs&q=Scrum+Master+OR+Project+Manager+OR+Program+Manager+OR+Technical+Project+Manager&location=Bangalore,+Karnataka,+India&api_key=${serpApiKey}`
         );
+        if (!response.ok) {
+              throw new Error("Failed to fetch jobs from SerpAPI");
+        }
 
         const data = await response.json();
 
@@ -43,8 +46,8 @@ export default async function handler(req, res) {
           const genAI = new GoogleGenerativeAI(geminiApiKey);
           const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-          const prompt = `Analyze the following ${jobs.length} jobs in Bangalore only from LinkedIn and Glassdoor for Scrum Master, Project Manager, Program Manager roles. Summarize key skills, salary patterns, and demand trends:\n\n${JSON.stringify(
-            jobs, Do not consider jobs which are 30 day old or more,
+          const prompt = `Analyze the following ${jobs.length} jobs in Bangalore only from LinkedIn and Glassdoor for Scrum Master, Project Manager, Program Manager roles. Do not consider jobs which are 30 day old or more. Summarize key skills, salary patterns, and demand trends:\n\n${JSON.stringify(
+            jobs,
             null,
             2
           )}`;
