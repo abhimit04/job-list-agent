@@ -7,26 +7,26 @@ export default async function handler(req, res) {
     const serpApiKey = process.env.SERPAPI_KEY;
     const geminiApiKey = process.env.GOOGLE_AI_API_KEY;
 
-        if (!serpApiKey) {
+    if (!serpApiKey) {
           return res.status(500).json({ error: "Missing SerpAPI key" });
-        }
+    }
 
         // Fetch latest jobs from SerpAPI
-        const response = await fetch(
-          `https://serpapi.com/search.json?engine=google_jobs&q=Scrum+Master+OR+Project+Manager+OR+Program+Manager+OR+Technical+Project+Manager&location=Bangalore,+Karnataka,+India&api_key=${serpApiKey}`
-        );
-        if (!response.ok) {
+    const response = await fetch(
+    https://serpapi.com/search.json?engine=google_jobs&q=Scrum+Master+OR+Project+Manager+OR+Program+Manager+OR+Technical+Project+Manager&location=Bangalore,+Karnataka,+India&api_key=${serpApiKey}`
+    );
+    if (!response.ok) {
               throw new Error("Failed to fetch jobs from SerpAPI");
-        }
+    }
 
-        const data = await response.json();
+    const data = await response.json();
 
-        if (!data.jobs_results) {
+    if (!data.jobs_results) {
           return res.status(500).json({ error: "No job results found" });
-        }
+    }
 
          // 🔎 Filter only LinkedIn + Glassdoor
-         const jobs = data.jobs_results
+    const jobs = data.jobs_results
               .filter(job =>
                 job.via &&
                 (job.via.toLowerCase().includes("linkedin") ||
@@ -41,8 +41,9 @@ export default async function handler(req, res) {
                 source: job.via,
                 link: job.apply_options?.[0]?.link || job.job_id,
               }));
+
      let aiAnalysis = "AI analysis not available.";
-        if (geminiApiKey && jobs.length > 0) {
+     if (geminiApiKey && jobs.length > 0) {
           const genAI = new GoogleGenerativeAI(geminiApiKey);
           const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -60,7 +61,7 @@ export default async function handler(req, res) {
 
     const aiResponse = await model.generateContent(prompt);
     const summary = aiResponse.response.text();
-
+    }
     // STEP 3: Setup Gmail transport
     let transporter = nodemailer.createTransport({
       service: "gmail",
