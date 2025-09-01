@@ -28,14 +28,14 @@ export default async function handler(req, res) {
     let transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: process.env.GMAIL_USER,   // your gmail address
-        pass: process.env.GMAIL_PASS    // app password
+        user: process.env.EMAIL_USER,   // your gmail address
+        pass: process.env.EMAIL_PASS    // app password
       }
     });
 
     // STEP 4: Send mail
     await transporter.sendMail({
-      from: `"AI Job Agent" <${process.env.GMAIL_USER}>`,
+      from: `"AI Job Agent" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_TO,  // your recipient email
       subject: "Latest Job Report - Bangalore",
       html: `<h3>AI Job Report</h3><p>${summary}</p>`
