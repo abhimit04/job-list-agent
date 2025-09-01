@@ -35,7 +35,10 @@ export default async function handler(req, res) {
     // STEP 2: AI summary using Gemini (Free tier)
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const prompt = `Summarize these ${jobs.length} jobs in Bangalore into a concise report with company, role, and hyperlink:\n\n${JSON.stringify(jobs)}`;
+    const prompt =
+    `Summarize these ${jobs.length} jobs in Bangalore into a concise report with company, role,
+    and new job in new line with hyperlink:\n\n${JSON.stringify(jobs)}`;
+
     const aiResponse = await model.generateContent(prompt);
     const summary = aiResponse.response.text();
 
