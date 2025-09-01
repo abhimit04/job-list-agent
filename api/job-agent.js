@@ -4,18 +4,33 @@ import nodemailer from "nodemailer";
 export default async function handler(req, res) {
   try {
     // STEP 1: Mock jobs / API jobs (replace with SerpAPI later)
-    const jobs = [
-      {
-        title: "Scrum Master",
-        company: "Razorpay",
-        url: "https://linkedin.com/jobs/view/1234567"
-      },
-      {
-        title: "Project Manager",
-        company: "Flipkart",
-        url: "https://linkedin.com/jobs/view/2345678"
-      }
-    ];
+    const serpApiKey = process.env.SERPAPI_KEY;
+        //const geminiApiKey = process.env.GEMINI_API_KEY;
+
+        if (!serpApiKey) {
+          return res.status(500).json({ error: "Missing SerpAPI key" });
+        }
+
+        // Fetch latest jobs from SerpAPI
+        const response = await fetch(
+          `https://serpapi.com/search.json?engine=google_jobs&q=Scrum+Master+OR+Project+Manager+OR+Program+Manager+OR+Technical+Project+Manager&location=Bangalore,+Karnataka,+India&api_key=${serpApiKey}`
+        );
+
+        const data = await response.json();
+
+        if (!data.jobs_results) {
+          return res.status(500).json({ error: "No job results found" });
+        }
+
+        const jobs = data.jobs_results
+          .filter(job => job.detected_extensions?.posted_at) // ensure job has a posted date
+          .map(job => ({
+            title: job.title,
+            company: job.company_name,
+            location: job.location,
+            date: job.detected_extensions?.posted_at || "N/A",
+            link: job.apply_options?.[0]?.link || job.job_id,
+          }));
 
     // STEP 2: AI summary using Gemini (Free tier)
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
