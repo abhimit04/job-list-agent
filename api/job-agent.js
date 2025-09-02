@@ -74,7 +74,7 @@ export default async function handler(req, res) {
           posted.toLowerCase().includes("hour") ||
           posted.toLowerCase().includes("just") ||
           (posted.toLowerCase().includes("day") &&
-            !posted.toLowerCase().includes("30+"))
+            !posted.toLowerCase().includes("14+"))
         );
       })
       .map((job) => ({
