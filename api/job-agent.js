@@ -166,48 +166,57 @@ export default async function handler(req, res) {
         Each item has: title, company, location, date, source, link, and may or may not include salary/compensation fields.
 
         TASKS (use ONLY the provided data; do not invent facts):
-        1) Brief Summary (3–5 bullets): what roles, seniority mix, and hiring momentum you observe.
-        2) Role Mix & Skills:
-           - Count by role buckets: Scrum Master, Project Manager, Program Manager, Technical Project Manager, Other.
-           - List recurring required skills/keywords you detect in titles (and if present, descriptions), e.g., Agile, Scrum, Jira, SAFe, Cloud, Data, AI/ML, Stakeholder mgmt.
-        3) Trend Analysis (Bangalore, last 30 days in this dataset):
-           - Notable themes (e.g., agile at scale, cloud/data programs, digital transformation).
-           - Seniority tilt (junior/mid/senior) inferred from titles.
-           - Source split (LinkedIn vs Glassdoor) and any company clusters.
-        4) Compensation Insight (₹ INR):
-           - From postings that include any pay info (fields like salary, compensation, pay, CTC if present in text), extract min/max and compute simple averages.
-           - Report: number of postings with pay info, avg (and low–high) by role bucket if possible.
-           - If NO postings include pay info, clearly state: "Compensation not specified in these postings."
-           - Do NOT guess pay for companies without explicit figures in the data.
-        5) Best Companies in Bangalore (from THIS dataset):
-           - Top employers by frequency (top 5–10). Show counts.
-        6) Curated List:
-           - Provide a concise, copy-ready list: "Company — Role — Link" (one per line; hyperlink the link).
+        1) **Summary (bullets)**
+           - Provide 3–5 bullet points summarizing hiring momentum, roles, and seniority mix.
 
-        OUTPUT FORMAT (Markdown):
+        2) **Role Mix & Skills (bullets & counts)**
+           - Show counts by role buckets: Scrum Master, Project Manager, Program Manager, Technical Project Manager, Other.
+           - List recurring skills/keywords you detect (Agile, Jira, Cloud, AI/ML, etc.).
+
+        3) **Trend Analysis (short paragraphs + bullets)**
+           - Note hiring themes (Agile at scale, digital transformation, etc.).
+           - Comment on seniority tilt (junior/mid/senior) from titles.
+           - Show source split (LinkedIn vs Glassdoor).
+
+        4) **Compensation Insight (bullets)**
+           - Count how many postings include pay.
+           - Extract min/max and compute simple averages (₹ INR).
+           - Report by role bucket if possible.
+           - If no pay info → write clearly: *"Compensation not specified in these postings."*
+
+        5) **Best Companies (bulleted top 5–10)**
+           - Rank by frequency in this dataset.
+
+        6) **Curated Job List (bullets)**
+           - Format: **[Company — Role](link)**
+           - One per line.
+
+        OUTPUT FORMAT:
+        Use **Markdown** with clear sections:
+
         ## Summary
-        • ...
+        • point 1
+        • point 2
 
         ## Role Mix & Skills
-        - Counts: ...
-        - Skills: ...
+        - Count 1
+        - Count 2
 
         ## Trends
-        - ...
+        Paragraph text here.
+        - Bullet if needed
 
-        ## Compensation (₹ INR, based on provided postings only)
-        - Postings with pay info: X of ${finalJobs.length}
-        - Overall: avg ₹A (low ₹L – high ₹H)
-        - By role (if available): Scrum Master ₹..., Project Manager ₹..., Program Manager ₹..., Technical PM ₹...
+        ## Compensation (₹ INR)
+        - …
 
-        ## Best Companies (by count in this dataset)
-        1) Company — N
-        ...
+        ## Best Companies
+        1. Company — N
+        2. Company — N
 
         ## Job List
-        - [Company — Role] (Link)
+        - [Company — Role](Link)
 
-        DATA:
+        DATA (for your analysis only, do not dump raw JSON in the final output):
         ${JSON.stringify(finalJobs, null, 2)}
         `;
 
