@@ -11,43 +11,47 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Missing API keys" });
     }
 
-    // ========== Fetch from SerpAPI ==========
-    const serpResponse = await fetch(
-      `https://serpapi.com/search.json?engine=google_jobs&q=Scrum+Master+OR+Project+Manager+OR+Program+Manager+OR+Technical+Project+Manager&location=Bangalore,+Karnataka,+India&api_key=${serpApiKey}`
-    );
+    // ========== Fetch from SerpAPI (3 pages) ==========
+    const serpJobs = [];
+    for (let start = 0; start < 30; start += 10) {
+      const response = await fetch(
+        `https://serpapi.com/search.json?engine=google_jobs&q=Scrum+Master+OR+Project+Manager+OR+Program+Manager+OR+Technical+Project+Manager&location=Bangalore,+Karnataka,+India&api_key=${serpApiKey}&start=${start}`
+      );
 
-    if (!serpResponse.ok) throw new Error("Failed to fetch jobs from SerpAPI");
-    const serpData = await serpResponse.json();
+      if (!response.ok) throw new Error("Failed to fetch jobs from SerpAPI");
+      const data = await response.json();
+      serpJobs.push(
+        ...(data.jobs_results || [])
+          .filter(
+            (job) =>
+              job.via &&
+              (job.via.toLowerCase().includes("linkedin") ||
+                job.via.toLowerCase().includes("glassdoor"))
+          )
+          .filter((job) => {
+            const posted = job.detected_extensions?.posted_at?.toLowerCase() || "";
+            return (
+              posted.includes("hour") ||
+              posted.includes("just") ||
+              (posted.includes("day") && !posted.includes("30+"))
+            );
+          })
+          .map((job) => ({
+            title: job.title,
+            company: job.company_name,
+            location: job.location,
+            date: job.detected_extensions?.posted_at || "N/A",
+            source: job.via,
+            link:
+              job.apply_options?.[0]?.link ||
+              `https://www.google.com/search?q=${job.job_id}`,
+          }))
+      );
+    }
 
-    const serpJobs = (serpData.jobs_results || [])
-      .filter(
-        (job) =>
-          job.via &&
-          (job.via.toLowerCase().includes("linkedin") ||
-            job.via.toLowerCase().includes("glassdoor"))
-      )
-      .filter((job) => {
-        const posted = job.detected_extensions?.posted_at?.toLowerCase() || "";
-        return (
-          posted.includes("hour") ||
-          posted.includes("just") ||
-          (posted.includes("day") && !posted.includes("30+"))
-        );
-      })
-      .map((job) => ({
-        title: job.title,
-        company: job.company_name,
-        location: job.location,
-        date: job.detected_extensions?.posted_at || "N/A",
-        source: job.via,
-        link:
-          job.apply_options?.[0]?.link ||
-          `https://www.google.com/search?q=${job.job_id}`,
-      }));
-
-    // ========== Fetch from JSearch ==========
+    // ========== Fetch from JSearch (3 pages) ==========
     const jsearchResponse = await fetch(
-      `https://jsearch.p.rapidapi.com/search?query=Scrum+Master+OR+Project+Manager+OR+Program+Manager+OR+Technical+Project+Manager&location=Bangalore,+Karnataka,+India&page=1&num_pages=5`,
+      `https://jsearch.p.rapidapi.com/search?query=Scrum+Master+OR+Project+Manager+OR+Program+Manager+OR+Technical+Project+Manager&location=Bangalore,+India&page=1&num_pages=5`,
       {
         method: "GET",
         headers: {
@@ -57,8 +61,7 @@ export default async function handler(req, res) {
       }
     );
 
-    if (!jsearchResponse.ok)
-      throw new Error("Failed to fetch jobs from JSearch");
+    if (!jsearchResponse.ok) throw new Error("Failed to fetch jobs from JSearch");
     const jsearchData = await jsearchResponse.json();
 
     const jsearchJobs = (jsearchData.data || [])
@@ -74,7 +77,7 @@ export default async function handler(req, res) {
           posted.toLowerCase().includes("hour") ||
           posted.toLowerCase().includes("just") ||
           (posted.toLowerCase().includes("day") &&
-            !posted.toLowerCase().includes("14+"))
+            !posted.toLowerCase().includes("30+"))
         );
       })
       .map((job) => ({
@@ -86,10 +89,14 @@ export default async function handler(req, res) {
         link: job.job_apply_link || job.job_google_link,
       }));
 
-    // ========== Combine & Deduplicate ==========
-    const allJobsRaw = [...serpJobs, ...jsearchJobs];
+    // ========== Combine, Filter by Location & Deduplicate ==========
+    const allowedLocations = ["bangalore", "bengaluru"];
 
-    // Deduplicate by title + company + location
+    const allJobsRaw = [...serpJobs, ...jsearchJobs].filter((job) => {
+      const loc = (job.location || "").toLowerCase();
+      return allowedLocations.some((city) => loc.includes(city));
+    });
+
     const seen = new Set();
     const allJobs = allJobsRaw.filter((job) => {
       const key = `${job.title}|${job.company}|${job.location}`.toLowerCase();
@@ -149,21 +156,8 @@ export default async function handler(req, res) {
       from: `"AI Job Agent" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_TO,
       subject: "Latest Job Report - Bangalore",
-      //<p>${aiAnalysis}</p> removed
-      html: `<h3>AI Job Report</h3>
-      <ul>${jobListHtml}</ul>`,
+      html: `<h3>AI Job Report</h3><p>${aiAnalysis}</p><ul>${jobListHtml}</ul>`,
     });
 
     // ========== Response ==========
-    res.status(200).json({
-      success: true,
-      message: "Jobs fetched (SerpAPI + JSearch), deduped & emailed successfully!",
-      jobs: allJobs,
-      summary: aiAnalysis,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (err) {
-    console.error("❌ Job Agent Error:", err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-}
+    res.status(200)
