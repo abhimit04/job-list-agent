@@ -33,7 +33,7 @@ export default async function handler(req, res) {
             return (
               posted.includes("hour") ||
               posted.includes("just") ||
-              (posted.includes("day") && !posted.includes("30+"))
+              (posted.includes("day") && !posted.includes("14+"))
             );
           })
           .map((job) => ({
