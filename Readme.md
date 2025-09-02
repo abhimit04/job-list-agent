@@ -6,7 +6,6 @@ AI-powered job aggregation tool that fetches the latest openings in **Bangalore,
 
 ## 🚀 Features
 - Fetches jobs from **SerpAPI** + **JSearch API**
-- Filters by location (**Bangalore / Bengaluru only**)
 - Deduplicates by job title, company, and location
 - AI-generated insights on:
     - Hiring trends
