@@ -85,8 +85,9 @@ export default async function handler(req, res) {
     const allJobsRaw = [...serpJobs, ...jsearchJobs].filter((job) => {
 //      const loc = (job.location || "").toLowerCase();
 //      return allowedLocations.some((city) => loc.includes(city));
+
     });
-//
+println("Jobs after location filter:", allJobsRaw.length);
     const seen = new Set();
     const allJobs = allJobsRaw.filter((job) => {
       const key = `${job.title}|${job.company}|${job.location}`.toLowerCase();
