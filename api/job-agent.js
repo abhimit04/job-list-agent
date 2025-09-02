@@ -75,18 +75,18 @@ export default async function handler(req, res) {
     }
 
     // ========== Combine, Relaxed Location & Deduplicate ==========
-    const allowedLocations = [
-      "Bangalore",
-      "Bengaluru",
-      "Karnataka",
-      "Bangalore urban",
-    ];
-
+//    const allowedLocations = [
+//      "Bangalore",
+//      "Bengaluru",
+//      "Karnataka",
+//      "Bangalore urban",
+//    ];
+//
     const allJobsRaw = [...serpJobs, ...jsearchJobs].filter((job) => {
-      const loc = (job.location || "").toLowerCase();
-      return allowedLocations.some((city) => loc.includes(city));
+//      const loc = (job.location || "").toLowerCase();
+//      return allowedLocations.some((city) => loc.includes(city));
     });
-
+//
     const seen = new Set();
     const allJobs = allJobsRaw.filter((job) => {
       const key = `${job.title}|${job.company}|${job.location}`.toLowerCase();
