@@ -74,8 +74,13 @@ export default async function handler(req, res) {
       }
     }
 
-    // ========== Combine, Filter by Location & Deduplicate ==========
-    const allowedLocations = ["bangalore", "bengaluru"];
+    // ========== Combine, Relaxed Location & Deduplicate ==========
+    const allowedLocations = [
+      "bangalore",
+      "bengaluru",
+      "karnataka",
+      "bangalore urban",
+    ];
 
     const allJobsRaw = [...serpJobs, ...jsearchJobs].filter((job) => {
       const loc = (job.location || "").toLowerCase();
@@ -90,7 +95,10 @@ export default async function handler(req, res) {
       return true;
     });
 
-    if (allJobs.length === 0) {
+    // Keep at least 10 jobs (slice top 15 if more)
+    const finalJobs = allJobs.length > 15 ? allJobs.slice(0, 15) : allJobs;
+
+    if (finalJobs.length === 0) {
       return res.status(200).json({
         success: true,
         message: "No jobs found (both APIs returned empty).",
@@ -107,8 +115,8 @@ export default async function handler(req, res) {
         const genAI = new GoogleGenerativeAI(geminiApiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        const prompt = `Summarize the following ${allJobs.length} jobs in Bangalore (LinkedIn/Glassdoor). Provide company, role, and hyperlink per line:\n\n${JSON.stringify(
-          allJobs,
+        const prompt = `Summarize the following ${finalJobs.length} jobs in Bangalore (LinkedIn/Glassdoor). Provide company, role, and hyperlink per line:\n\n${JSON.stringify(
+          finalJobs,
           null,
           2
         )}`;
@@ -121,7 +129,7 @@ export default async function handler(req, res) {
     }
 
     // ========== Email ==========
-    const jobListHtml = allJobs
+    const jobListHtml = finalJobs
       .map(
         (job) =>
           `<li><b>${job.title}</b> at ${job.company} (${job.date})
@@ -154,7 +162,7 @@ export default async function handler(req, res) {
           ? "SerpAPI only"
           : "JSearch only"
       }, filtered to Bangalore, deduped & emailed successfully!`,
-      jobs: allJobs,
+      jobs: finalJobs,
       summary: aiAnalysis,
       timestamp: new Date().toISOString(),
     });
