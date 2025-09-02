@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import nodemailer from "nodemailer";
+import { marked } from "marked";
 
 export default async function handler(req, res) {
   try {
@@ -244,12 +245,12 @@ export default async function handler(req, res) {
         pass: process.env.EMAIL_PASS,
       },
     });
-
+    const htmlContent = marked.parse(aiAnalysis);
     await transporter.sendMail({
       from: `"AI Job Agent" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_TO,
       subject: "Latest Jobs in PM/Scrum Master role - Bangalore",
-      html: `<h3>Job Report</h3><ul>${jobListHtml}</ul><ul>${aiAnalysis}</ul>`,
+      html: `<h3>Job Report</h3><ul>${jobListHtml}</ul><ul>${htmlContent}</ul>`,
     });
 
     // ========== Response ==========
