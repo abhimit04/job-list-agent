@@ -161,11 +161,56 @@ export default async function handler(req, res) {
         const genAI = new GoogleGenerativeAI(geminiApiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        const prompt = `Summarize the following ${finalJobs.length} jobs in Bangalore (LinkedIn/Glassdoor). Provide company, role, and hyperlink per line:\n\n${JSON.stringify(
-          finalJobs,
-          null,
-          2
-        )}`;
+        const prompt = `
+        You are an analyst. You are given ${finalJobs.length} recent Bangalore job postings (JSON array).
+        Each item has: title, company, location, date, source, link, and may or may not include salary/compensation fields.
+
+        TASKS (use ONLY the provided data; do not invent facts):
+        1) Brief Summary (3–5 bullets): what roles, seniority mix, and hiring momentum you observe.
+        2) Role Mix & Skills:
+           - Count by role buckets: Scrum Master, Project Manager, Program Manager, Technical Project Manager, Other.
+           - List recurring required skills/keywords you detect in titles (and if present, descriptions), e.g., Agile, Scrum, Jira, SAFe, Cloud, Data, AI/ML, Stakeholder mgmt.
+        3) Trend Analysis (Bangalore, last 30 days in this dataset):
+           - Notable themes (e.g., agile at scale, cloud/data programs, digital transformation).
+           - Seniority tilt (junior/mid/senior) inferred from titles.
+           - Source split (LinkedIn vs Glassdoor) and any company clusters.
+        4) Compensation Insight (₹ INR):
+           - From postings that include any pay info (fields like salary, compensation, pay, CTC if present in text), extract min/max and compute simple averages.
+           - Report: number of postings with pay info, avg (and low–high) by role bucket if possible.
+           - If NO postings include pay info, clearly state: "Compensation not specified in these postings."
+           - Do NOT guess pay for companies without explicit figures in the data.
+        5) Best Companies in Bangalore (from THIS dataset):
+           - Top employers by frequency (top 5–10). Show counts.
+        6) Curated List:
+           - Provide a concise, copy-ready list: "Company — Role — Link" (one per line; hyperlink the link).
+
+        OUTPUT FORMAT (Markdown):
+        ## Summary
+        • ...
+
+        ## Role Mix & Skills
+        - Counts: ...
+        - Skills: ...
+
+        ## Trends
+        - ...
+
+        ## Compensation (₹ INR, based on provided postings only)
+        - Postings with pay info: X of ${finalJobs.length}
+        - Overall: avg ₹A (low ₹L – high ₹H)
+        - By role (if available): Scrum Master ₹..., Project Manager ₹..., Program Manager ₹..., Technical PM ₹...
+
+        ## Best Companies (by count in this dataset)
+        1) Company — N
+        ...
+
+        ## Job List
+        - [Company — Role] (Link)
+
+        DATA:
+        ${JSON.stringify(finalJobs, null, 2)}
+        `;
+
 
         const aiResponse = await model.generateContent(prompt);
         aiAnalysis = aiResponse.response.text();
@@ -194,8 +239,8 @@ export default async function handler(req, res) {
     await transporter.sendMail({
       from: `"AI Job Agent" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_TO,
-      subject: "Latest Job Report - Bangalore",
-      html: `<h3>AI Job Report</h3><ul>${jobListHtml}</ul>`,
+      subject: "Latest Jobs in PM/Scrum Master role - Bangalore",
+      html: `<h3>Job Report</h3><ul>${jobListHtml}</ul><p>${aiAnalysis}<p>`,
     });
 
     // ========== Response ==========
