@@ -149,7 +149,9 @@ export default async function handler(req, res) {
       from: `"AI Job Agent" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_TO,
       subject: "Latest Job Report - Bangalore",
-      html: `<h3>AI Job Report</h3><p>${aiAnalysis}</p><ul>${jobListHtml}</ul>`,
+      //<p>${aiAnalysis}</p> removed
+      html: `<h3>AI Job Report</h3>
+      <ul>${jobListHtml}</ul>`,
     });
 
     // ========== Response ==========
