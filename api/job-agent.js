@@ -82,21 +82,19 @@ export default async function handler(req, res) {
 //      "Bangalore urban",
 //    ];
 //
-    const allJobsRaw = [...serpJobs, ...jsearchJobs].filter((job) => {
+    const allJobs = [...serpJobs, ...jsearchJobs].filter((job) => {
 //      const loc = (job.location || "").toLowerCase();
 //      return allowedLocations.some((city) => loc.includes(city));
 
     });
- //checking job length
-console.log("total jobs:", allJobsRaw.length);
 
-    const seen = new Set();
-    const allJobs = allJobsRaw.filter((job) => {
-      const key = `${job.title}|${job.company}|${job.location}`.toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+//    const seen = new Set();
+//    const allJobs = allJobsRaw.filter((job) => {
+//      const key = `${job.title}|${job.company}|${job.location}`.toLowerCase();
+//      if (seen.has(key)) return false;
+//      seen.add(key);
+//      return true;
+//    });
 
     // Keep at least 10 jobs (slice top 15 if more)
     const finalJobs = allJobs.length > 15 ? allJobs.slice(0, 15) : allJobs;
