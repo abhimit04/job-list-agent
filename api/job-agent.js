@@ -12,33 +12,75 @@ export default async function handler(req, res) {
 
     // ========== Fetch from SerpAPI ==========
     if (serpApiKey) {
-      try {
-        for (let start = 0; start < 30; start += 10) {
-          const url = `https://serpapi.com/search.json?engine=google_jobs&q=Scrum+Master+OR+Project+Manager+OR+Program+Manager+OR+Technical+Project+Manager&location=Bangalore,+India&api_key=${serpApiKey}&start=${start}`;
-          const response = await fetch(url);
+          try {
+            for (let page = 0; page < 3; page++) { // fetch up to 3 pages
+              const url = new URL("https://serpapi.com/search.json");
+              url.searchParams.set("engine", "google_jobs");
+              url.searchParams.set(
+                "q",
+                "Scrum Master OR Project Manager OR Program Manager OR Technical Project Manager"
+              );
+              url.searchParams.set("location", "Bangalore, India");
+              url.searchParams.set("api_key", apiKey);
+              if (nextPageToken) url.searchParams.set("next_page_token", nextPageToken);
 
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`SerpAPI Error ${response.status}: ${errorText}`);
+              const response = await fetch(url);
+              if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`SerpAPI Error ${response.status}: ${errorText}`);
+              }
+
+              const data = await response.json();
+              jobs.push(
+                ...(data.jobs_results || []).map((job) => ({
+                  title: job.title,
+                  company: job.company_name,
+                  location: job.location,
+                  date: job.detected_extensions?.posted_at || "N/A",
+                  source: job.via || "Google Jobs",
+                  link:
+                    job.apply_options?.[0]?.link ||
+                    `https://www.google.com/search?q=${job.job_id}`,
+                }))
+              );
+
+              // stop if no next page
+              if (!data.serpapi_pagination?.next_page_token) break;
+              nextPageToken = data.serpapi_pagination.next_page_token;
+
+              // API recommends small delay before next call (to allow token activation)
+              await new Promise((r) => setTimeout(r, 2000));
+            }
+          } catch (e) {
+            console.warn("⚠️ SerpAPI fetch failed:", e.message);
           }
-
-          const data = await response.json();
-          serpJobs.push(
-            ...(data.jobs_results || []).map((job) => ({
-              title: job.title,
-              company: job.company_name,
-              location: job.location,
-              date: job.detected_extensions?.posted_at || "N/A",
-              source: job.via || "Google Jobs",
-              link:
-                job.apply_options?.[0]?.link ||
-                `https://www.google.com/search?q=${job.job_id}`,
-            }))
-          );
-        }
-      } catch (e) {
-        console.warn("⚠️ SerpAPI fetch failed:", e.message);
-      }
+//      try {
+//        for (let start = 0; start < 30; start += 10) {
+//          const url = `https://serpapi.com/search.json?engine=google_jobs&q=Scrum+Master+OR+Project+Manager+OR+Program+Manager+OR+Technical+Project+Manager&location=Bangalore,+India&api_key=${serpApiKey}&start=${start}`;
+//          const response = await fetch(url);
+//
+//          if (!response.ok) {
+//            const errorText = await response.text();
+//            throw new Error(`SerpAPI Error ${response.status}: ${errorText}`);
+//          }
+//
+//          const data = await response.json();
+//          serpJobs.push(
+//            ...(data.jobs_results || []).map((job) => ({
+//              title: job.title,
+//              company: job.company_name,
+//              location: job.location,
+//              date: job.detected_extensions?.posted_at || "N/A",
+//              source: job.via || "Google Jobs",
+//              link:
+//                job.apply_options?.[0]?.link ||
+//                `https://www.google.com/search?q=${job.job_id}`,
+//            }))
+//          );
+//        }
+//      } catch (e) {
+//        console.warn("⚠️ SerpAPI fetch failed:", e.message);
+//      }
     }
 
     // ========== Fetch from JSearch ==========
