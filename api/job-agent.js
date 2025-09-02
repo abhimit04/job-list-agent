@@ -160,4 +160,16 @@ export default async function handler(req, res) {
     });
 
     // ========== Response ==========
-    res.status(200)
+        res.status(200).json({
+          success: true,
+          message:
+            "Jobs fetched (SerpAPI + JSearch), filtered to Bangalore, deduped & emailed successfully!",
+          jobs: allJobs,
+          summary: aiAnalysis,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (err) {
+        console.error("❌ Job Agent Error:", err);
+        res.status(500).json({ success: false, error: err.message });
+      }
+    }
