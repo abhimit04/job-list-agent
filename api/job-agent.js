@@ -21,7 +21,7 @@ export default async function handler(req, res) {
                 "Scrum Master OR Project Manager OR Program Manager OR Technical Project Manager"
               );
               url.searchParams.set("location", "Bangalore, India");
-              url.searchParams.set("api_key", apiKey);
+              url.searchParams.set("api_key", serpApiKey);
               if (nextPageToken) url.searchParams.set("next_page_token", nextPageToken);
 
               const response = await fetch(url);
