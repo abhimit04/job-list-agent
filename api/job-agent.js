@@ -132,7 +132,7 @@ export default async function handler(req, res) {
 //      return allowedLocations.some((city) => loc.includes(city));
 
     });
-
+    console.log("After joining both feeds:", allJobs.length);
 //    const seen = new Set();
 //    const allJobs = allJobsRaw.filter((job) => {
 //      const key = `${job.title}|${job.company}|${job.location}`.toLowerCase();
