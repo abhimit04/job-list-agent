@@ -45,7 +45,7 @@ export default async function handler(req, res) {
     if (jsearchApiKey) {
       try {
         const jsearchResponse = await fetch(
-          `https://jsearch.p.rapidapi.com/search?query=Scrum+Master+OR+Project+Manager+OR+Program+Manager+OR+Technical+Project+Manager&location=Bangalore,+India&page=1&num_pages=3`,
+          `https://jsearch.p.rapidapi.com/search?query=Scrum+Master+OR+Project+Manager+OR+Program+Manager+OR+Technical+Project+Manager&location=Bangalore,+India&page=1&num_pages=5`,
           {
             method: "GET",
             headers: {
@@ -76,10 +76,10 @@ export default async function handler(req, res) {
 
     // ========== Combine, Relaxed Location & Deduplicate ==========
     const allowedLocations = [
-      "bangalore",
-      "bengaluru",
-      "karnataka",
-      "bangalore urban",
+      "Bangalore",
+      "Bengaluru",
+      "Karnataka",
+      "Bangalore urban",
     ];
 
     const allJobsRaw = [...serpJobs, ...jsearchJobs].filter((job) => {
