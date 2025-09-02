@@ -1,24 +1,158 @@
 <!DOCTYPE html>
-<html>
-  <head><meta charset="UTF-8"><title>Job Agent</title></head>
-  <body>
-    <h2>AI Job Agent</h2>
-    <button id="fetchJobs">Fetch Jobs</button>
-    <pre id="output"></pre>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Job Agent</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 2rem;
+    }
 
-    <script>
-      document.getElementById("fetchJobs").addEventListener("click", async () => {
-        const out = document.getElementById("output");
-        out.textContent = "⏳ Fetching jobs...";
-        try {
-          const res = await fetch("/api/job-agent");
-          const data = await res.json();
-          console.log("Fetched jobs:", data);
-          out.textContent = JSON.stringify(data, null, 2);
-        } catch (e) {
-          out.textContent = "❌ Error: " + e.message;
-        }
+    .container {
+      background: #fff;
+      max-width: 900px;
+      width: 100%;
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    h2 {
+      margin-bottom: 1rem;
+      color: #444;
+      text-align: center;
+    }
+
+    button {
+      background: linear-gradient(135deg, #43e97b, #38f9d7);
+      border: none;
+      color: #fff;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      display: block;
+      margin: 0 auto 2rem auto;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+    }
+
+    #output {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .job-card {
+      background: #f9f9fb;
+      border-radius: 12px;
+      padding: 1.2rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .job-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    }
+
+    .job-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      color: #222;
+    }
+
+    .job-company {
+      font-size: 0.95rem;
+      color: #555;
+      margin-bottom: 0.3rem;
+    }
+
+    .job-location {
+      font-size: 0.9rem;
+      color: #777;
+      margin-bottom: 0.5rem;
+    }
+
+    .job-date {
+      font-size: 0.8rem;
+      color: #999;
+      margin-bottom: 0.8rem;
+    }
+
+    .job-link {
+      display: inline-block;
+      background: #667eea;
+      color: #fff;
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: background 0.2s ease;
+    }
+
+    .job-link:hover {
+      background: #4a5fc1;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>🤖 AI Job Agent</h2>
+  <button id="fetchJobs">Fetch Jobs</button>
+  <div id="output">Click "Fetch Jobs" to load data...</div>
+</div>
+
+<script>
+  document.getElementById("fetchJobs").addEventListener("click", async () => {
+    const out = document.getElementById("output");
+    out.textContent = "⏳ Fetching jobs...";
+    try {
+      const res = await fetch("/api/job-agent");
+      const data = await res.json();
+      console.log("Fetched jobs:", data);
+
+      if (!data.jobs || data.jobs.length === 0) {
+        out.textContent = "⚠️ No jobs found.";
+        return;
+      }
+
+      // Clear output
+      out.innerHTML = "";
+
+      // Render job cards
+      data.jobs.forEach((job) => {
+        const card = document.createElement("div");
+        card.className = "job-card";
+        card.innerHTML = `
+          <div class="job-title">${job.title || "Untitled Role"}</div>
+          <div class="job-company">${job.company || "Unknown Company"}</div>
+          <div class="job-location">📍 ${job.location || "Bangalore"}</div>
+          <div class="job-date">🗓️ ${job.date || "N/A"}</div>
+          <a href="${job.link}" target="_blank" class="job-link">View Job</a>
+        `;
+        out.appendChild(card);
       });
-    </script>
-  </body>
+    } catch (e) {
+      out.textContent = "❌ Error: " + e.message;
+    }
+  });
+</script>
+</body>
 </html>
