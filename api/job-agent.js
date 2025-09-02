@@ -127,11 +127,11 @@ export default async function handler(req, res) {
     console.log("Raw SerpAPI jobs:", serpJobs.length);
     console.log("Raw JSearch jobs:", jsearchJobs.length);
 
-    const allJobs = [...serpJobs, ...jsearchJobs].filter((job) => {
+    const allJobs = [...serpJobs, ...jsearchJobs];
 //      const loc = (job.location || "").toLowerCase();
 //      return allowedLocations.some((city) => loc.includes(city));
 
-    });
+
     console.log("After joining both feeds:", allJobs.length);
 //    const seen = new Set();
 //    const allJobs = allJobsRaw.filter((job) => {
