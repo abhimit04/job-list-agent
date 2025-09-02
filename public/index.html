@@ -13,6 +13,7 @@
         try {
           const res = await fetch("/api/job-agent");
           const data = await res.json();
+          console.log("Fetched jobs:", data);
           out.textContent = JSON.stringify(data, null, 2);
         } catch (e) {
           out.textContent = "❌ Error: " + e.message;
