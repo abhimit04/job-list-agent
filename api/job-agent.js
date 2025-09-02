@@ -127,12 +127,12 @@ export default async function handler(req, res) {
     console.log("Raw SerpAPI jobs:", serpJobs.length);
     console.log("Raw JSearch jobs:", jsearchJobs.length);
 
-    const allJobs = [...serpJobs, ...jsearchJobs];
+    const finalJobs = [...serpJobs, ...jsearchJobs];
 //      const loc = (job.location || "").toLowerCase();
 //      return allowedLocations.some((city) => loc.includes(city));
 
 
-    console.log("After joining both feeds:", allJobs.length);
+    console.log("After joining both feeds:", finalJobs.length);
 //    const seen = new Set();
 //    const allJobs = allJobsRaw.filter((job) => {
 //      const key = `${job.title}|${job.company}|${job.location}`.toLowerCase();
@@ -142,7 +142,7 @@ export default async function handler(req, res) {
 //    });
 
     // Keep at least 10 jobs (slice top 15 if more)
-    const finalJobs = allJobs.length > 15 ? allJobs.slice(0, 15) : allJobs;
+    //const finalJobs = allJobs;
 
     if (finalJobs.length === 0) {
       return res.status(200).json({
@@ -240,7 +240,7 @@ export default async function handler(req, res) {
       from: `"AI Job Agent" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_TO,
       subject: "Latest Jobs in PM/Scrum Master role - Bangalore",
-      html: `<h3>Job Report</h3><ul>${jobListHtml}</ul><p>${aiAnalysis}<p>`,
+      html: `<h3>Job Report</h3><ul>${jobListHtml}</ul><ul>${aiAnalysis}</ul>`,
     });
 
     // ========== Response ==========
