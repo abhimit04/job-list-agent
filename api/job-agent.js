@@ -9,6 +9,7 @@ export default async function handler(req, res) {
 
     let serpJobs = [];
     let jsearchJobs = [];
+    let nextPageToken = null;
 
     // ========== Fetch from SerpAPI ==========
     if (serpApiKey) {
@@ -31,7 +32,7 @@ export default async function handler(req, res) {
               }
 
               const data = await response.json();
-              jobs.push(
+              serpJobs.push(
                 ...(data.jobs_results || []).map((job) => ({
                   title: job.title,
                   company: job.company_name,
