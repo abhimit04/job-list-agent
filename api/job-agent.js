@@ -87,7 +87,9 @@ export default async function handler(req, res) {
 //      return allowedLocations.some((city) => loc.includes(city));
 
     });
-println("Jobs after location filter:", allJobsRaw.length);
+ //checking job length
+console.log("total jobs:", allJobsRaw.length);
+
     const seen = new Set();
     const allJobs = allJobsRaw.filter((job) => {
       const key = `${job.title}|${job.company}|${job.location}`.toLowerCase();
